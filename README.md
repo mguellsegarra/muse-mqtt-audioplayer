@@ -21,6 +21,8 @@ If you've ever been frustrated by the limitations of commercial smart speakers i
 - ES8388 codec support
 - Adjustable volume control (0-100%)
 - Stream playback with repeat mode
+- Play Google TTS
+- Play OpenAI TTS
 
 ## 🛠️ Prerequisites
 
@@ -35,7 +37,7 @@ If you've ever been frustrated by the limitations of commercial smart speakers i
   - Tested on ESP32 version 3.0.7
   - [Muse Library](https://github.com/RASPIAUDIO/Muse_library)
   - [ESP32-audioI2S-master](https://github.com/schreibfaul1/ESP32-audioI2S)
-  - [PubSubClient](https://github.com/knolleary/pubsubclient)
+  - [MQTT.h](https://github.com/256dpi/arduino-mqtt)
   - [ArduinoJson](https://arduinojson.org/)
 
 ## ⚙️ Installation
@@ -52,10 +54,10 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
     - [Muse Library](https://github.com/RASPIAUDIO/Muse_library)
     - [ESP32-audioI2S-master](https://github.com/schreibfaul1/ESP32-audioI2S)
+    - [MQTT.h](https://github.com/256dpi/arduino-mqtt)
 
 4. If not already installed, install also these libraries:
 
-    - [PubSubClient](https://github.com/knolleary/pubsubclient)
     - [ArduinoJson](https://arduinojson.org/)
 
 5. Set the board to `ESP32 Dev Module`
@@ -90,7 +92,7 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ### Commands
 
-#### Play Audio
+#### Play Audio ▶️
 
 ```json
 {
@@ -100,7 +102,7 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 }
 ```
 
-#### Stop playback
+#### Stop playback ⏹️
 
 ```json
 {
@@ -109,7 +111,7 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 }
 ```
 
-#### Play Audio with Volume
+#### Play Audio with Volume 🔊
 
 ```json
 {
@@ -120,7 +122,7 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 }
 ```
 
-#### Play Audio in Repeat mode
+#### Play Audio with Repeat 🔁
 
 ```json
 {
@@ -132,15 +134,44 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 }
 ```
 
-#### Play Radio Station
+#### You can also play live radio stations 📻
 
 ```json
 {
     "speaker_id": "living_room",
     "command": "play",
-    "url": "http://direct.fipradio.fr/live/fip-midfi.mp3",
+    "url": "http://direct.fipradio.fr/live/fip-midfi.mp3"
 }
 ```
+
+#### Play Google TTS
+
+```json
+{
+    "speaker_id": "living_room",
+    "command": "google_tts",
+    "text": "Hello Raspiaudio, this text was generated using google speech API",
+    "language": "en",
+    "volume": 80
+}
+```
+
+#### Play OpenAI TTS
+
+```json
+{
+    "speaker_id": "living_room",
+    "command": "openai_tts",
+    "text": "Your text to convert to speech",
+    "openai_api_key": "your-openai-api-key",
+    "model": "tts-1",
+    "voice": "shimmer",
+    "volume": 80
+}
+```
+
+> **Note**: The TTS commands do not support the `repeat` parameter. Only `volume` can be adjusted for these commands.
+> For OpenAI TTS, you'll need a valid billable OpenAI API key.
 
 ## 📊 Status Updates
 
@@ -165,10 +196,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - RASPIAUDIO and the MUSE Luxe Development Team for this fantastic piece of open source hardware :)
 - Contributors to the required libraries
 
-##  Author 🙋🏽‍♂️
+##  Author 🙋🏽‍♂️
 
 I'm Marc Güell Segarra, a freelance software developer at [Ondori.dev](https://ondori.dev).
 
-##  Buy Me a Coffee ☕
+##  Buy Me a Coffee ☕
 
 If you found this extension useful, consider **[buying me a coffee](https://buymeacoffee.com/mguellsegarra)!**

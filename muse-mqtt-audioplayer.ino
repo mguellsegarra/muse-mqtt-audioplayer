@@ -5,7 +5,7 @@
 #include "Wire.h"
 #include "museWrover.h"
 #include "Audio.h"
-#include "PubSubClient.h"
+#include <MQTT.h>
 #include <ArduinoJson.h>
 
 // Configuration
@@ -22,8 +22,8 @@ const unsigned long WIFI_RETRY_DELAY = 5000; // 5 seconds delay between WiFi con
 
 ES8388 es;
 Audio audio;
-WiFiClient espClient;
-PubSubClient client(espClient);
+WiFiClient net;
+MQTTClient client(4096); // Increased buffer size for large messages
 
 String lastPlayedUrl = "";
 bool repeat_mode = false;
@@ -64,9 +64,9 @@ void setup()
     audio.setPinout(I2S_BCLK, I2S_LRCK, I2S_SDOUT, I2S_MCLK);
 
     // Setup MQTT
-    client.setServer(mqtt_server, mqtt_port);
-    client.setCallback(callback);
-    reconnectMQTT();
+    client.begin(mqtt_server, mqtt_port, net);
+    client.onMessage(messageReceived);
+    connectToMQTT();
 }
 
 void loop()
@@ -98,32 +98,27 @@ void loop()
                 Serial.println("\nWiFi reconnected!");
                 Serial.print("IP address: ");
                 Serial.println(WiFi.localIP());
-
-                // Reconnect MQTT after WiFi is back
-                if (!client.connected())
-                {
-                    reconnectMQTT();
-                }
+                connectToMQTT();
             }
             else
             {
                 Serial.println("\nWiFi reconnection failed!");
             }
-
             lastWifiAttempt = millis();
         }
     }
     else
     {
-        // Check MQTT connection only if WiFi is connected
+        // Check MQTT connection
         if (!client.connected())
         {
-            reconnectMQTT();
+            connectToMQTT();
         }
-        client.loop();
     }
 
+    client.loop();
     audio.loop();
+    delay(10); // Small delay to prevent excessive CPU usage
 }
 
 void audio_info(const char *info)
@@ -162,15 +157,13 @@ void setVolume(int vol)
     Serial.printf("Volume set to: %d%% (Audio: %d, ES8388: %d)\n", vol, audio_vol, vol);
 }
 
-// Modify the callback function
-void callback(char *topic, uint8_t *payload, unsigned int length)
+void messageReceived(String &topic, String &payload)
 {
-    char message[length + 1];
-    memcpy(message, payload, length);
-    message[length] = '\0';
+    Serial.println("MQTT message received:");
+    Serial.println(payload);
 
-    StaticJsonDocument<200> doc;
-    DeserializationError error = deserializeJson(doc, message);
+    StaticJsonDocument<2048> doc;
+    DeserializationError error = deserializeJson(doc, payload);
 
     if (error)
     {
@@ -184,10 +177,18 @@ void callback(char *topic, uint8_t *payload, unsigned int length)
     const char *command = doc["command"];
 
     // Both speaker_id and command are required
+    Serial.printf("Target speaker: %s\n", target_speaker ? target_speaker : "null");
+    Serial.printf("Command: %s\n", command ? command : "null");
+    Serial.printf("Current speaker_id: %s\n", speaker_id);
+
     if (!target_speaker || !command || String(target_speaker) != speaker_id)
     {
+        Serial.println("Message rejected: speaker_id mismatch or missing command");
         return;
     }
+
+    int vol = doc["volume"] | DEFAULT_VOLUME;
+    setVolume(vol);
 
     // Handle commands
     if (strcmp(command, "play") == 0)
@@ -198,14 +199,61 @@ void callback(char *topic, uint8_t *payload, unsigned int length)
             lastPlayedUrl = String(url);
             audio.connecttohost(url);
             Serial.printf("Playing URL: %s\n", url);
-
-            // Handle volume with default value of 80
-            int vol = doc["volume"] | DEFAULT_VOLUME;
-            setVolume(vol);
-
-            // Handle repeat mode
             repeat_mode = doc["repeat"] | false;
             Serial.printf("Repeat mode: %s\n", repeat_mode ? "on" : "off");
+        }
+    }
+    else if (strcmp(command, "google_tts") == 0)
+    {
+        const char *text = doc["text"];
+        const char *language = doc["language"] | "en";
+        if (text)
+        {
+            audio.connecttospeech(text, language);
+            Serial.printf("Playing Google TTS: %s (Language: %s)\n", text, language);
+            repeat_mode = false; // TTS doesn't support repeat
+        }
+    }
+    else if (strcmp(command, "openai_tts") == 0)
+    {
+        Serial.println("OpenAI TTS command received");
+        const char *text = doc["text"];
+        const char *api_key = doc["openai_api_key"];
+        const char *model = doc["model"] | "tts-1";
+        const char *voice = doc["voice"] | "shimmer";
+        Serial.println("OpenAI TTS command received-2");
+
+        if (text && api_key)
+        {
+            Serial.println("OpenAI TTS Debug Info:");
+            Serial.printf("- Text: %s\n", text);
+            Serial.printf("- Model: %s\n", model);
+            Serial.printf("- Voice: %s\n", voice);
+            Serial.println("Attempting to call OpenAI TTS...");
+
+            bool result = audio.openai_speech(api_key, model, text, voice, "mp3", "1");
+
+            if (result)
+            {
+                Serial.println("OpenAI TTS call successful");
+            }
+            else
+            {
+                Serial.println("OpenAI TTS call failed!");
+                Serial.println("Please check:");
+                Serial.println("1. API key validity");
+                Serial.println("2. Internet connection");
+                Serial.println("3. Memory availability");
+            }
+            repeat_mode = false;
+        }
+        else
+        {
+            Serial.println("Error: Missing required parameters for OpenAI TTS");
+            if (!text)
+                Serial.println("- Missing 'text' parameter");
+            if (!api_key)
+                Serial.println("- Missing 'openai_api_key' parameter");
         }
     }
     else if (strcmp(command, "stop") == 0)
@@ -216,28 +264,25 @@ void callback(char *topic, uint8_t *payload, unsigned int length)
     }
 }
 
-// Function to reconnect to MQTT
-void reconnectMQTT()
+void connectToMQTT()
 {
-    while (!client.connected())
-    {
-        Serial.print("Attempting MQTT connection...");
-        // Create a random client ID
-        String clientId = "MUSE-MQTT-AudioPlayer-";
-        clientId += String(random(0xffff), HEX);
+    Serial.print("Attempting MQTT connection...");
+    // Create a random client ID
+    String clientId = "MUSE-MQTT-AudioPlayer-";
+    clientId += String(random(0xffff), HEX);
 
-        if (client.connect(clientId.c_str(), mqtt_username, mqtt_password))
-        {
-            Serial.println("MQTT connected");
-            client.subscribe(mqtt_topic);
-        }
-        else
-        {
-            Serial.print("failed, rc=");
-            Serial.print(client.state());
-            Serial.println("Try again in 5 seconds");
-            delay(5000);
-        }
+    if (client.connect(clientId.c_str(), mqtt_username, mqtt_password))
+    {
+        Serial.println("MQTT connected!");
+        client.subscribe(mqtt_topic);
+        Serial.printf("Subscribed to topic: %s\n", mqtt_topic);
+    }
+    else
+    {
+        Serial.println("MQTT connection failed!");
+        Serial.println("Will try again in 5 seconds");
+        delay(5000);
+        return;
     }
 }
 
