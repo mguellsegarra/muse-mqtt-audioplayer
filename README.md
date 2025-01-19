@@ -58,7 +58,7 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
     - [PubSubClient](https://github.com/knolleary/pubsubclient)
     - [ArduinoJson](https://arduinojson.org/)
 
-5. Set the board to "ESP32 Dev Module"
+5. Set the board to `ESP32 Dev Module`
 
 6. Configure your settings in the code:
 
@@ -155,10 +155,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🙏 Acknowledgments
 
 - ESP32 Community
-- RASPIAUDIO and the MUSE Luxe Development Team
+- RASPIAUDIO and the MUSE Luxe Development Team for this fantastic piece of open source hardware :)
 - Contributors to the required libraries
 
-## Troubleshooting
+##  Author 🙋🏽‍♂️
 
-- This sketch is tested with the ESP32
-- If you get an error about the "Audio" library, try to install the latest version of the library from the Arduino Library Manager.
+I'm Marc Güell Segarra, a freelance software developer at [Ondori.dev](https://ondori.dev).
+
+##  Buy Me a Coffee ☕
+
+If you found this extension useful, consider **[buying me a coffee](https://buymeacoffee.com/mguellsegarra)!**
