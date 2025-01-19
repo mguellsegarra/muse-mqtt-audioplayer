@@ -182,6 +182,21 @@ The device provides real-time status updates through Serial output, including:
 - Stream metadata
 - Error messages
 
+## 🐛 Troubleshooting
+
+If you get some error like:
+
+```text
+Sketch uses 1477137 bytes (112%) of program storage space. Maximum is 1310720 bytes.
+Global variables use 63848 bytes (19%) of dynamic memory, leaving 263832 bytes for local variables. Maximum is 327680 bytes.
+Sketch too big; see https://support.arduino.cc/hc/en-us/articles/360013825179 for tips on reducing it.
+text section exceeds available space in board
+
+Compilation error: text section exceeds available space in board
+```
+
+You can try to change the Partition Scheme to `NO OTA (2 MB APP/2 MB SPIFFS)` in the Arduino IDE.
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

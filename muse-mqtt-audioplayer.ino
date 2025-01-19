@@ -28,6 +28,10 @@ MQTTClient client(4096); // Increased buffer size for large messages
 String lastPlayedUrl = "";
 bool repeat_mode = false;
 unsigned long lastWifiAttempt = 0;
+unsigned long lastWifiCheck = 0;
+unsigned long lastMqttCheck = 0;
+const unsigned long WIFI_CHECK_INTERVAL = 5000; // Check WiFi every 5 seconds
+const unsigned long MQTT_CHECK_INTERVAL = 2000; // Check MQTT every 2 seconds
 
 void setup()
 {
@@ -71,54 +75,74 @@ void setup()
 
 void loop()
 {
-    // Check WiFi connection
-    if (WiFi.status() != WL_CONNECTED)
+    unsigned long currentMillis = millis();
+
+    // Handle WiFi connection
+    if (currentMillis - lastWifiCheck >= WIFI_CHECK_INTERVAL)
     {
-        Serial.println("WiFi connection lost!");
+        lastWifiCheck = currentMillis;
 
-        // Only try to reconnect after delay
-        if (millis() - lastWifiAttempt > WIFI_RETRY_DELAY)
+        if (WiFi.status() != WL_CONNECTED)
         {
-            Serial.println("Attempting to reconnect WiFi...");
+            Serial.println("WiFi connection lost!");
 
-            WiFi.disconnect();
-            WiFi.begin(ssid, password);
-
-            // Wait a bit to see if connection is successful
-            int attempt = 0;
-            while (WiFi.status() != WL_CONNECTED && attempt < 20)
+            if (currentMillis - lastWifiAttempt >= WIFI_RETRY_DELAY)
             {
-                delay(100);
-                attempt++;
-                Serial.print(".");
+                lastWifiAttempt = currentMillis;
+                Serial.println("Attempting to reconnect WiFi...");
+
+                WiFi.disconnect();
+                delay(100); // Give it time to disconnect properly
+                WiFi.begin(ssid, password);
+
+                // Wait up to 2 seconds for connection
+                int attempt = 0;
+                while (WiFi.status() != WL_CONNECTED && attempt < 20)
+                {
+                    delay(100);
+                    attempt++;
+                }
+
+                if (WiFi.status() == WL_CONNECTED)
+                {
+                    Serial.println("\nWiFi reconnected!");
+                    Serial.print("IP address: ");
+                    Serial.println(WiFi.localIP());
+                }
+                else
+                {
+                    Serial.println("\nWiFi reconnection failed!");
+                }
             }
+        }
+    }
 
-            if (WiFi.status() == WL_CONNECTED)
+    // Handle MQTT connection - only if WiFi is connected
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        if (currentMillis - lastMqttCheck >= MQTT_CHECK_INTERVAL)
+        {
+            lastMqttCheck = currentMillis;
+
+            if (!client.connected())
             {
-                Serial.println("\nWiFi reconnected!");
-                Serial.print("IP address: ");
-                Serial.println(WiFi.localIP());
+                Serial.println("MQTT disconnected, attempting reconnection...");
                 connectToMQTT();
             }
-            else
-            {
-                Serial.println("\nWiFi reconnection failed!");
-            }
-            lastWifiAttempt = millis();
         }
-    }
-    else
-    {
-        // Check MQTT connection
-        if (!client.connected())
+
+        // Only process MQTT loop if connected
+        if (client.connected())
         {
-            connectToMQTT();
+            client.loop();
         }
     }
 
-    client.loop();
+    // Audio processing is independent of network status
     audio.loop();
-    delay(10); // Small delay to prevent excessive CPU usage
+
+    // Small delay to prevent watchdog triggers
+    delay(10);
 }
 
 void audio_info(const char *info)
