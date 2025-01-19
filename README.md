@@ -32,7 +32,7 @@ If you've ever been frustrated by the limitations of commercial smart speakers i
 
 - [Arduino IDE](https://www.arduino.cc/en/software)
 - Required Libraries:
-  - [ESP32 Board Support Package](https://github.com/espressif/arduino-esp32)
+  - Tested on ESP32 version 3.0.7
   - [Muse Library](https://github.com/RASPIAUDIO/Muse_library)
   - [ESP32-audioI2S-master](https://github.com/schreibfaul1/ESP32-audioI2S)
   - [PubSubClient](https://github.com/knolleary/pubsubclient)
@@ -48,27 +48,30 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 2. Open the project in Arduino IDE.
 
-3. Configure the WiFi credentials and MQTT server details in the `muse-mqtt-audioplayer.ino` file:
+3. Install the required libraries through Arduino Library Manager:
+   - [Muse Library](https://github.com/RASPIAUDIO/Muse_library)
+   - [ESP32-audioI2S-master](https://github.com/schreibfaul1/ESP32-audioI2S)
 
-```cpp
-char ssid[] = "YourWiFiName";
-char password[] = "YourWiFiPassword";
-const char mqtt_server = "192.168.1.100";
-const char mqtt_username = "your_mqtt_user";
-const char mqtt_password = "your_mqtt_password";
-const int mqtt_port = 1883;
-```
+  If not already installed, install:
 
-4. Configure the MQTT topic and speaker ID:
+  - [PubSubClient](https://github.com/knolleary/pubsubclient)
+  - [ArduinoJson](https://arduinojson.org/)
 
-```cpp
-const char *mqtt_topic = "speaker/control";
-const char *speaker_id = "living_room";
-```
+4. Set the board to "ESP32 Dev Module"
 
-5. Upload the sketch to your MUSE Luxe board.
+5. Configure your settings in the code:
 
-6. Use the MQTT commands to control the audio player.
+   ```cpp
+   char ssid[] = "YourWiFiName";
+   char password[] = "YourWiFiPassword";
+   const char *mqtt_server = "192.168.1.100";
+   const char *mqtt_username = "your_mqtt_user";
+   const char *mqtt_password = "your_mqtt_password";
+   ```
+
+6. Upload the sketch to your MUSE Luxe board.
+
+7. Use the MQTT commands to control the audio player.
 
 ## 📡 MQTT Control
 
@@ -153,3 +156,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - ESP32 Community
 - RASPIAUDIO and the MUSE Luxe Development Team
 - Contributors to the required libraries
+
+## Troubleshooting
+
+- This sketch is tested with the ESP32
+- If you get an error about the "Audio" library, try to install the latest version of the library from the Arduino Library Manager.
