@@ -196,10 +196,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - RASPIAUDIO and the MUSE Luxe Development Team for this fantastic piece of open source hardware :)
 - Contributors to the required libraries
 
-##  Author 🙋🏽‍♂️
+## 🙋🏽‍♂️ Author
 
 I'm Marc Güell Segarra, a freelance software developer at [Ondori.dev](https://ondori.dev).
 
-##  Buy Me a Coffee ☕
+## ☕ Buy Me a Coffee
 
 If you found this project useful, consider **[buying me a coffee](https://buymeacoffee.com/mguellsegarra)!**
