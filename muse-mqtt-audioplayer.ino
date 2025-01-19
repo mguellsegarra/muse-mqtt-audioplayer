@@ -36,21 +36,32 @@ const unsigned long MQTT_CHECK_INTERVAL = 2000; // Check MQTT every 2 seconds
 void setup()
 {
     Serial.begin(115200);
-    Serial.println("\r\nReset");
+    Serial.println("\n[SETUP] Starting...");
 
     WiFi.mode(WIFI_STA);
+    Serial.printf("[SETUP] Attempting to connect to %s\n", ssid);
     WiFi.begin(ssid, password);
 
-    while (WiFi.status() != WL_CONNECTED)
+    int attempt = 0;
+    while (WiFi.status() != WL_CONNECTED && attempt < 50)
     {
-        Serial.print(".");
         delay(100);
+        attempt++;
+        if (attempt % 10 == 0)
+        {
+            Serial.printf("[SETUP] WiFi status: %d\n", WiFi.status());
+        }
     }
 
-    Serial.printf_P(PSTR("Connected\r\nRSSI: "));
-    Serial.print(WiFi.RSSI());
-    Serial.print(" IP: ");
-    Serial.println(WiFi.localIP());
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        Serial.println("[SETUP] WiFi Connected!");
+        Serial.printf("[SETUP] IP address: %s\n", WiFi.localIP().toString().c_str());
+    }
+    else
+    {
+        Serial.println("[SETUP] WiFi connection failed!");
+    }
 
     Serial.printf("Connect to ES8388 codec... ");
 
@@ -84,20 +95,23 @@ void loop()
 
         if (WiFi.status() != WL_CONNECTED)
         {
-            Serial.println("WiFi connection lost!");
+            Serial.println("\n[WiFi] Connection lost!");
 
             if (currentMillis - lastWifiAttempt >= WIFI_RETRY_DELAY)
             {
                 lastWifiAttempt = currentMillis;
-                Serial.println("Attempting to reconnect WiFi...");
+                Serial.println("[WiFi] Starting reconnection process...");
 
-                WiFi.disconnect();
-                delay(100); // Give it time to disconnect properly
+                WiFi.disconnect(true); // Added true to disconnect completely
+                Serial.println("[WiFi] Disconnected");
+                delay(1000);
+
+                Serial.printf("[WiFi] Attempting to connect to %s\n", ssid);
                 WiFi.begin(ssid, password);
 
-                // Wait up to 2 seconds for connection
+                // Wait up to 5 seconds for connection
                 int attempt = 0;
-                while (WiFi.status() != WL_CONNECTED && attempt < 20)
+                while (WiFi.status() != WL_CONNECTED && attempt < 50)
                 {
                     delay(100);
                     attempt++;
@@ -105,13 +119,12 @@ void loop()
 
                 if (WiFi.status() == WL_CONNECTED)
                 {
-                    Serial.println("\nWiFi reconnected!");
-                    Serial.print("IP address: ");
-                    Serial.println(WiFi.localIP());
+                    Serial.println("[WiFi] Successfully reconnected!");
+                    Serial.printf("[WiFi] IP address: %s\n", WiFi.localIP().toString().c_str());
                 }
                 else
                 {
-                    Serial.println("\nWiFi reconnection failed!");
+                    Serial.printf("[WiFi] Reconnection failed! Status: %d\n", WiFi.status());
                 }
             }
         }
@@ -126,7 +139,7 @@ void loop()
 
             if (!client.connected())
             {
-                Serial.println("MQTT disconnected, attempting reconnection...");
+                Serial.println("[MQTT] Disconnected, attempting reconnection...");
                 connectToMQTT();
             }
         }
@@ -290,21 +303,29 @@ void messageReceived(String &topic, String &payload)
 
 void connectToMQTT()
 {
-    Serial.print("Attempting MQTT connection...");
+    Serial.println("[MQTT] Starting connection process...");
     // Create a random client ID
     String clientId = "MUSE-MQTT-AudioPlayer-";
     clientId += String(random(0xffff), HEX);
+    Serial.printf("[MQTT] Using client ID: %s\n", clientId.c_str());
 
     if (client.connect(clientId.c_str(), mqtt_username, mqtt_password))
     {
-        Serial.println("MQTT connected!");
-        client.subscribe(mqtt_topic);
-        Serial.printf("Subscribed to topic: %s\n", mqtt_topic);
+        Serial.println("[MQTT] Successfully connected!");
+        Serial.printf("[MQTT] Subscribing to topic: %s\n", mqtt_topic);
+        if (client.subscribe(mqtt_topic))
+        {
+            Serial.println("[MQTT] Successfully subscribed!");
+        }
+        else
+        {
+            Serial.println("[MQTT] Failed to subscribe!");
+        }
     }
     else
     {
-        Serial.println("MQTT connection failed!");
-        Serial.println("Will try again in 5 seconds");
+        Serial.println("[MQTT] Connection failed!");
+        Serial.println("[MQTT] Will try again in 5 seconds");
         delay(5000);
         return;
     }
