@@ -60,7 +60,7 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 5. Set the board to `ESP32 Dev Module`
 
-6. Configure your settings in the code:
+6. Configure the connection settings in the code:
 
    ```cpp
    char ssid[] = "YourWiFiName";
@@ -70,9 +70,16 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
    const char *mqtt_password = "your_mqtt_password";
    ```
 
-7. Upload the sketch to your MUSE Luxe board.
+7. Also you have to configure the `speaker_id` in the code and if you want, the `mqtt_topic` for controlling it:
 
-8. Use the MQTT commands to control the audio player and enjoy 🎉
+   ```cpp
+   const char *speaker_id = "living_room";
+   const char *mqtt_topic = "speaker/control";
+   ```
+
+8. Upload the sketch to your MUSE Luxe board.
+
+9. Use the MQTT commands to control the audio player and enjoy 🎉
 
 ## 📡 MQTT Control
 
