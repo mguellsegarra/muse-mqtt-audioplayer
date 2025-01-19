@@ -202,4 +202,4 @@ I'm Marc Güell Segarra, a freelance software developer at [Ondori.dev](https://
 
 ##  Buy Me a Coffee ☕
 
-If you found this extension useful, consider **[buying me a coffee](https://buymeacoffee.com/mguellsegarra)!**
+If you found this project useful, consider **[buying me a coffee](https://buymeacoffee.com/mguellsegarra)!**
