@@ -1,6 +1,6 @@
 # 🔊 MUSE Luxe MQTT Audio Player
 
-An Arduino sketch for ESP32-based [MUSE Luxe Speaker](https://raspiaudio.com/product/esp-muse-luxe/) that enables network audio streaming via MQTT control. Features include WiFi connectivity, ES8388 codec support, volume control, and playback management through MQTT commands.
+An Arduino sketch for ESP32-based [RASPIAUDIO](https://github.com/RASPIAUDIO) [MUSE Luxe Speaker](https://raspiaudio.com/product/esp-muse-luxe/) that enables network audio streaming via MQTT control. Features include WiFi connectivity, ES8388 codec support, volume control, and playback management through MQTT commands.
 
 ## 💡 Background
 
@@ -49,17 +49,18 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 2. Open the project in Arduino IDE.
 
 3. Install the required libraries through Arduino Library Manager:
-   - [Muse Library](https://github.com/RASPIAUDIO/Muse_library)
-   - [ESP32-audioI2S-master](https://github.com/schreibfaul1/ESP32-audioI2S)
 
-  If not already installed, install:
+    - [Muse Library](https://github.com/RASPIAUDIO/Muse_library)
+    - [ESP32-audioI2S-master](https://github.com/schreibfaul1/ESP32-audioI2S)
 
-  - [PubSubClient](https://github.com/knolleary/pubsubclient)
-  - [ArduinoJson](https://arduinojson.org/)
+4. If not already installed, install also these libraries:
 
-4. Set the board to "ESP32 Dev Module"
+    - [PubSubClient](https://github.com/knolleary/pubsubclient)
+    - [ArduinoJson](https://arduinojson.org/)
 
-5. Configure your settings in the code:
+5. Set the board to "ESP32 Dev Module"
+
+6. Configure your settings in the code:
 
    ```cpp
    char ssid[] = "YourWiFiName";
@@ -69,9 +70,9 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
    const char *mqtt_password = "your_mqtt_password";
    ```
 
-6. Upload the sketch to your MUSE Luxe board.
+7. Upload the sketch to your MUSE Luxe board.
 
-7. Use the MQTT commands to control the audio player.
+8. Use the MQTT commands to control the audio player and enjoy 🎉
 
 ## 📡 MQTT Control
 
