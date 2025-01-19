@@ -33,7 +33,8 @@ If you've ever been frustrated by the limitations of commercial smart speakers i
 - [Arduino IDE](https://www.arduino.cc/en/software)
 - Required Libraries:
   - [ESP32 Board Support Package](https://github.com/espressif/arduino-esp32)
-  - [ESP8266Audio](https://github.com/earlephilhower/ESP8266Audio)
+  - [Muse Library](https://github.com/RASPIAUDIO/Muse_library)
+  - [ESP32-audioI2S-master](https://github.com/schreibfaul1/ESP32-audioI2S)
   - [PubSubClient](https://github.com/knolleary/pubsubclient)
   - [ArduinoJson](https://arduinojson.org/)
 
@@ -55,11 +56,19 @@ char password[] = "YourWiFiPassword";
 const char mqtt_server = "192.168.1.100";
 const char mqtt_username = "your_mqtt_user";
 const char mqtt_password = "your_mqtt_password";
+const int mqtt_port = 1883;
 ```
 
-4. Upload the sketch to your MUSE Luxe board.
+4. Configure the MQTT topic and speaker ID:
 
-5. Use the MQTT commands to control the audio player.
+```cpp
+const char *mqtt_topic = "speaker/control";
+const char *speaker_id = "living_room";
+```
+
+5. Upload the sketch to your MUSE Luxe board.
+
+6. Use the MQTT commands to control the audio player.
 
 ## 📡 MQTT Control
 
