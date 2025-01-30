@@ -1,6 +1,6 @@
 # 🔊 MUSE Luxe MQTT Audio Player
 
-An Arduino sketch for ESP32-based [RASPIAUDIO](https://github.com/RASPIAUDIO) [MUSE Luxe Speaker](https://raspiaudio.com/product/esp-muse-luxe/) that enables network audio streaming via MQTT control. Features include WiFi connectivity, ES8388 codec support, volume control, and playback management through MQTT commands.
+An Arduino sketch for ESP32-based [RASPIAUDIO](https://github.com/RASPIAUDIO) [MUSE Luxe Speaker](https://raspiaudio.com/product/esp-muse-luxe/) that enables network audio streaming via MQTT control. Features include WiFi connectivity, ES8388 codec support, volume control, battery monitoring, and playback management through MQTT commands.
 
 ## 💡 Background
 
@@ -17,12 +17,15 @@ If you've ever been frustrated by the limitations of commercial smart speakers i
 ## 🌟 Features
 
 - WiFi connectivity with auto-reconnect
-- MQTT control interface
+- MQTT control interface with speaker-specific topics
 - ES8388 codec support
 - Adjustable volume control (0-100%)
 - Stream playback with repeat mode
 - Play Google TTS
 - Play OpenAI TTS
+- Battery level monitoring
+- Charging status reporting
+- Dynamic status updates (1s when playing, 5min when idle)
 
 ## 🛠️ Prerequisites
 
@@ -72,12 +75,16 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
    const char *mqtt_password = "your_mqtt_password";
    ```
 
-7. Also you have to configure the `speaker_id` in the code and if you want, the `mqtt_topic` for controlling it:
+7. Configure the speaker settings in the code:
 
    ```cpp
    const char *speaker_id = "living_room";
-   const char *mqtt_topic = "speaker/control";
+   const char *base_topic = "speaker";  // Base topic for all MQTT messages
    ```
+
+   This will create the following MQTT topics:
+   - Control: `speaker/living_room/control`
+   - Status: `speaker/living_room/status`
 
 8. Upload the sketch to your MUSE Luxe board.
 
@@ -87,8 +94,9 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ### Topic Structure
 
-- Default topic: `speaker/control`
-- Each command should include `speaker_id` for targeting specific devices
+Each speaker uses two MQTT topics based on its ID:
+- Control topic: `speaker/{speaker_id}/control` (e.g., `speaker/living_room/control`)
+- Status topic: `speaker/{speaker_id}/status` (e.g., `speaker/living_room/status`)
 
 ### Commands
 
@@ -96,7 +104,6 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ```json
 {
-    "speaker_id": "living_room",
     "command": "play",
     "url": "http://example.com/audio.mp3"
 }
@@ -106,7 +113,6 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ```json
 {
-    "speaker_id": "living_room",
     "command": "stop"
 }
 ```
@@ -115,7 +121,6 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ```json
 {
-    "speaker_id": "living_room",
     "command": "play",
     "url": "http://example.com/audio.mp3",
     "volume": 80
@@ -126,7 +131,6 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ```json
 {
-    "speaker_id": "living_room",
     "command": "play",
     "url": "http://example.com/alarm.mp3",
     "volume": 100,
@@ -138,7 +142,6 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ```json
 {
-    "speaker_id": "living_room",
     "command": "play",
     "url": "http://direct.fipradio.fr/live/fip-midfi.mp3"
 }
@@ -148,7 +151,6 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ```json
 {
-    "speaker_id": "living_room",
     "command": "google_tts",
     "text": "Hello Raspiaudio, this text was generated using google speech API",
     "language": "en",
@@ -160,7 +162,6 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ```json
 {
-    "speaker_id": "living_room",
     "command": "openai_tts",
     "text": "Your text to convert to speech",
     "openai_api_key": "your-openai-api-key",
@@ -175,12 +176,23 @@ git clone https://github.com/mguellsegarra/muse-mqtt-audioplayer.git
 
 ## 📊 Status Updates
 
-The device provides real-time status updates through Serial output, including:
+The device provides real-time status updates through its status topic (`speaker/{speaker_id}/status`):
 
-- Connection status (WiFi & MQTT)
-- Playback information
-- Stream metadata
-- Error messages
+- Every 1 second when playing audio
+- Every 5 minutes when idle
+- Immediately when state changes (play/stop)
+
+Status message format:
+```json
+{
+    "status": "playing",          // "playing" or "idle"
+    "repeat_mode": false,         // true if repeat is enabled
+    "battery_level": 85,          // battery percentage
+    "is_charging": true,          // charging status
+    "current_url": "http://...",  // current playing URL
+    "volume": 80                  // current volume (0-100)
+}
+```
 
 ## 🐛 Troubleshooting
 
